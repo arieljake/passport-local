@@ -1,61 +1,166 @@
 # passport-local
 
-[![Build](https://travis-ci.org/jaredhanson/passport-local.png)](https://travis-ci.org/jaredhanson/passport-local)
-[![Coverage](https://coveralls.io/repos/jaredhanson/passport-local/badge.png)](https://coveralls.io/r/jaredhanson/passport-local)
-[![Quality](https://codeclimate.com/github/jaredhanson/passport-local.png)](https://codeclimate.com/github/jaredhanson/passport-local)
-[![Dependencies](https://david-dm.org/jaredhanson/passport-local.png)](https://david-dm.org/jaredhanson/passport-local)
-[![Tips](http://img.shields.io/gittip/jaredhanson.png)](https://www.gittip.com/jaredhanson/)
+[![Build](https://travis-ci.org/arieljake/passport-local.png)](https://travis-ci.org/arieljake/passport-local)
+[![Coverage](https://coveralls.io/repos/arieljake/passport-local/badge.png)](https://coveralls.io/r/arieljake/passport-local)
+[![Quality](https://codeclimate.com/github/arieljake/passport-local.png)](https://codeclimate.com/github/arieljake/passport-local)
+[![Dependencies](https://david-dm.org/arieljake/passport-local.png)](https://david-dm.org/arieljake/passport-local)
+[![Tips](http://img.shields.io/gittip/arieljake.png)](https://www.gittip.com/arieljake/)
 
 
 [Passport](http://passportjs.org/) strategy for authenticating with a username
 and password.
 
-This module lets you authenticate using a username and password in your Node.js
-applications.  By plugging into Passport, local authentication can be easily and
-unobtrusively integrated into any application or framework that supports
-[Connect](http://www.senchalabs.org/connect/)-style middleware, including
-[Express](http://expressjs.com/).
-
-## Install
-
-    $ npm install passport-local
+This module extends the basic LocalStrategy to implement the register function used
+by (arieljake/passport).
 
 ## Usage
 
 #### Configure Strategy
 
-The local authentication strategy authenticates users using a username and
-password.  The strategy requires a `verify` callback, which accepts these
-credentials and calls `done` providing a user.
+The local authentication strategy authenticates & registers users using a username and
+password.  The strategy requires a `verify` callback, and optionally accepts a `register`
+callback which accepts these credentials and calls `done` providing a user.
 
     passport.use(new LocalStrategy(
-      function(username, password, done) {
+      
+	  // verify callback
+	  function(username, password, done) {
         User.findOne({ username: username }, function (err, user) {
           if (err) { return done(err); }
           if (!user) { return done(null, false); }
           if (!user.verifyPassword(password)) { return done(null, false); }
           return done(null, user);
         });
+      },
+	  
+	  // optional register callback
+	  function(username, password, done) {
+        User.insert({ username: username, password: password }, function (err, user) {
+          if (err) { return done(err); }
+          if (!user) { return done(null, false); }
+          return done(null, user);
+        });
       }
     ));
 
-#### Authenticate Requests
+#### Registration Requests
 
-Use `passport.authenticate()`, specifying the `'local'` strategy, to
-authenticate requests.
+Use `passport.register()`, specifying the `'local'` strategy, to
+register users.
 
 For example, as route middleware in an [Express](http://expressjs.com/)
 application:
 
-    app.post('/login', 
-      passport.authenticate('local', { failureRedirect: '/login' }),
+    app.post('/register', 
+      passport.register('local', { failureRedirect: '/register' }),
       function(req, res) {
         res.redirect('/');
       });
 
 ## Examples
 
-For complete, working examples, refer to the multiple [examples](https://github.com/jaredhanson/passport-local/tree/master/examples) included.
+	passport.use('local', new LocalStrategy(
+
+		// Authenticate Function
+		function authenticate(username, password, done)
+		{
+			mongoDB.collection("users").findOne(
+			{
+				username: username
+			}, 
+
+			function(err, user)
+			{
+				if (err)
+				{
+					return done(err);
+				}
+
+				if (!user)
+				{
+					return done(null, false,
+					{
+						message: 'Incorrect username or password.'
+					});
+				}
+
+				validatePassword(user, password, function(err, isMatch)
+				{
+					if (err)
+					{
+						return done(err);
+					}
+
+					if (!isMatch)
+					{
+						return done(null, false,
+						{
+							message: 'Incorrect username or password.'
+						});
+					}
+
+					return done(null, user);
+				});
+			});
+		},
+
+		// Register Function
+		function register(username, password, done)
+		{
+			mongoDB.collection("users").findOne(
+			{
+				username: username
+			}, 
+			
+			function(err, user)
+			{
+				if (err)
+				{
+					return done(err);
+				}
+
+				if (user)
+				{
+					return done(null, false,
+					{
+						message: 'Username unavailable.'
+					});
+				}
+
+				// your own generateUser function to create the object you want
+				generateUser(username, password, function(err, user)
+				{
+					if (err)
+					{
+						return done(err);
+					}
+
+					if (!user)
+					{
+						return done("Failed to process registration.");
+					}
+
+					mongoDB.collection("users").insert(
+						user,
+						function (err, savedUsers)
+						{
+							if (err)
+							{
+								return done(err);
+							}
+							
+							if (savedUsers.length != 1)
+							{
+								return done("Failed to process registration");
+							}
+
+							return done(null, savedUsers[0]);
+						}
+					);
+				});
+			});
+		}
+	));
 
 ## Tests
 
@@ -65,9 +170,8 @@ For complete, working examples, refer to the multiple [examples](https://github.
 ## Credits
 
   - [Jared Hanson](http://github.com/jaredhanson)
+  - [Ariel Jakobovits](http://github.com/arieljake)
 
 ## License
 
 [The MIT License](http://opensource.org/licenses/MIT)
-
-Copyright (c) 2011-2014 Jared Hanson <[http://jaredhanson.net/](http://jaredhanson.net/)>
