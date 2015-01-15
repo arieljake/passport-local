@@ -4,8 +4,6 @@
 [![Coverage](https://coveralls.io/repos/arieljake/passport-local/badge.png)](https://coveralls.io/r/arieljake/passport-local)
 [![Quality](https://codeclimate.com/github/arieljake/passport-local.png)](https://codeclimate.com/github/arieljake/passport-local)
 [![Dependencies](https://david-dm.org/arieljake/passport-local.png)](https://david-dm.org/arieljake/passport-local)
-[![Tips](http://img.shields.io/gittip/arieljake.png)](https://www.gittip.com/arieljake/)
-
 
 [Passport](http://passportjs.org/) strategy for authenticating with a username
 and password.
